@@ -13,5 +13,6 @@ Route::get('/hello', function () {
 
 Route::get('/test', [TestController::class, 'testAction']);
 
-
+Route::get('/form', [TestController::class, 'viewForm']);
+Route::post('/submit', [TestController::class, 'submitForm2']);
 
