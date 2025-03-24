@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,18 +12,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-//        User::factory()->create([
-//            'name' => 'Test User',
-//            'email' => 'test@example.com',
-//        ]);
-
         $this->call([
             UsersTableSeeder::class,
             CategoriesTableSeeder::class,
             NotesTableSeeder::class,
             NoteCategoryTableSeeder::class,
         ]);
+
+        // Vytvorí 10 kategórií
+        $categories = Category::factory(10)->create();
     }
 }
