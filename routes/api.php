@@ -6,6 +6,7 @@ use App\Http\Controllers\BookRpcController;
 use App\Http\Controllers\BookSacController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 //Route::get('/hello', function () {
@@ -34,4 +35,6 @@ Route::get('/users-with-notes-count', [NoteController::class, 'usersWithNotesCou
 Route::get('/longest-and-shortest-note', [NoteController::class, 'longestAndShortestNote']);
 Route::get('/notes-last-week', [NoteController::class, 'notesLastWeek']);
 
+Route::apiResource('categories', CategoryController::class);
+Route::get('categories/name/{name}', [CategoryController::class, 'findByName']);
 
