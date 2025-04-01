@@ -28,4 +28,12 @@ class Note extends Model
             ->orWhere('body', 'LIKE', "%$keyword%")
             ->get();
     }
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
+
+    public function categories() {
+        return $this->belongsToMany(Category::class, 'note_category');
+    }
 }

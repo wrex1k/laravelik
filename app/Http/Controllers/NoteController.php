@@ -6,6 +6,9 @@ use App\Models\Note;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+
 
 class NoteController extends Controller
 {
@@ -20,11 +23,11 @@ class NoteController extends Controller
 //        return response()->json($notes);
 //    }
 
-    public function index()
+    /* public function index()
     {
         $notes = Note::orderBy('updated_at', 'desc')->get();
         return response()->json($notes);
-    }
+    } */
 
     /**
      * Store a newly created resource in storage.
@@ -46,7 +49,7 @@ class NoteController extends Controller
 //        }
 //    }
 
-    public function store(Request $request)
+/*     public function store(Request $request)
     {
         $note = Note::create([
             'user_id' => $request->user_id,
@@ -59,7 +62,7 @@ class NoteController extends Controller
         } else {
             return response()->json(['message' => 'Poznámka nebola vytvorená'], Response::HTTP_FORBIDDEN);
         }
-    }
+    } */
 
     /**
      * Display the specified resource.
@@ -95,7 +98,7 @@ class NoteController extends Controller
 //        }
 //    }
 
-    public function update(Request $request, $id)
+    /* public function update(Request $request, $id)
     {
         $note = Note::find($id);
 
@@ -109,7 +112,7 @@ class NoteController extends Controller
         ]);
 
         return response()->json(['message' => 'Poznámka bola aktualizovaná', 'note' => $note]);
-    }
+    } */
 
     /**
      * Remove the specified resource from storage.
@@ -249,4 +252,89 @@ class NoteController extends Controller
         return response()->json(['last_week_notes' => $count]);
     }
 
+    public function index() {
+        $notes = Note::with(['user', 'categories'])->orderBy('updated_at', 'desc')->get();
+
+        return response()->json($notes);
+    }
+
+    public function store(Request $request) {
+        try {
+            $validate = $request->validate([
+                'user_id' => 'required|exists:users,id',
+                'title' => 'required|string|min:5|max:255',
+                'body' => 'required|string|min:10|max:1000',
+                'categories' => 'array|max:3',
+                'categories.*' => 'exists:categories,id',
+            ]);
+        
+        
+            $note = Note::create([
+                'user_id'=>$validate['user_id'],
+                'title'=>$validate['title'],
+                'body'=>$validate['body']
+            ]);
+            
+            if (!empty($validate['categories'])) {
+                $note->categories()->sync($validate['categories']);
+            }
+
+            $note->load(['user', 'categories']);
+
+            return response()->json([
+                'message' => 'Poznámka bola vytvorená',
+                'note' => $note
+            ], Response::HTTP_CREATED);
+        }
+        catch (\Exception $e){
+            return response()->json([
+               'message' => 'Chyba pri vytváraní poznámky',
+               'errors' => $e->getMessage() 
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+    }
+
+    public function update(Request $request, $id) {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|min:5|max:255',
+                'body' => 'required|string|min:10|max:1000',
+                'categories' => 'array|max:3',
+                'categories.*' => 'exists:categories,id',
+            ]);
+    
+            $note = Note::find($id);
+            if (!$note) {
+                return response()->json(['message' => 'Poznámka nebola nájdená'], Response::HTTP_NOT_FOUND);
+            }
+    
+            $note->update([
+                'title' => $validated['title'],
+                'body' => $validated['body']
+            ]);
+    
+            if (isset($validated['categories'])) {
+                $note->categories()->sync($validated['categories']);
+            }
+    
+            $note->load(['user', 'categories']);
+    
+            return response()->json([
+                'message' => 'Poznámka bola aktualizovaná',
+                'note' => $note
+            ], Response::HTTP_OK);
+        }
+        catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Chyba pri aktualizácii poznámky',
+                'errors' => $e->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Neočekávaná chyba pri aktualizácii poznámky',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }    
 }
